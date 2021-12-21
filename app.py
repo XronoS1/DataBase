@@ -14,12 +14,18 @@ cursor = conn.cursor()
 def index():
     return render_template('login.html')
 
-@app.route('/login/', methods=['POST'])
-
+@app.route('/login/', methods=['POST', 'GET'])
 def login():
+    if request.method == 'POST':
+        if request.form.get("login"):
+            username = request.form.get('username')
+            password = request.form.get('password')
+            if username == '' or password == '':
+                return render_template('errors.html', error='Введите ваш логин и пароль!')
+            cursor.execute("SELECT * FROM service.users WHERE login=%s AND password=%s", (str(username), str(password)))
+            records = list(cursor.fetchall())
+            if len(records) == 0:
+                return render_template('errors.html', error='В базе данных нет такого пользователя')
+            return render_template('account.html', full_name=records[0][1], password=records[0][3], login=records[0][2])
 
-    username = request.form.get('username')
-    password = request.form.get('password')
-    cursor.execute("SELECT * FROM service.users WHERE login=%s AND password=%s", str(username), str(password))
-    records = list(cursor.fetchall())
-    return render_template('account.html', full_name=records[0][1])
+app.run()
